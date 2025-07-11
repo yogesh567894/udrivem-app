@@ -41,11 +41,40 @@ class CarFilters {
     this.sortOrder,
   });
 
-  factory CarFilters.fromJson(Map<String, dynamic> json) => 
-      _$CarFiltersFromJson(json);
+  factory CarFilters.fromJson(Map<String, dynamic> json) => _$CarFiltersFromJson(json);
   Map<String, dynamic> toJson() => _$CarFiltersToJson(this);
 
-  // Helper method to convert to query parameters
+  // Add missing copyWith method
+  CarFilters copyWith({
+    String? location,
+    String? city,
+    double? priceMin,
+    double? priceMax,
+    String? carType,
+    String? fuelType,
+    String? transmission,
+    int? seatingCapacity,
+    DateTime? availableFrom,
+    DateTime? availableTo,
+    String? sortBy,
+    String? sortOrder,
+  }) {
+    return CarFilters(
+      location: location ?? this.location,
+      city: city ?? this.city,
+      priceMin: priceMin ?? this.priceMin,
+      priceMax: priceMax ?? this.priceMax,
+      carType: carType ?? this.carType,
+      fuelType: fuelType ?? this.fuelType,
+      transmission: transmission ?? this.transmission,
+      seatingCapacity: seatingCapacity ?? this.seatingCapacity,
+      availableFrom: availableFrom ?? this.availableFrom,
+      availableTo: availableTo ?? this.availableTo,
+      sortBy: sortBy ?? this.sortBy,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
     if (location != null) params['location'] = location;

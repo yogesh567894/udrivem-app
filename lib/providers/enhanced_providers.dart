@@ -2,132 +2,110 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/car.dart';
 import '../models/booking.dart';
 import '../models/filters.dart';
-import '../models/api_response.dart';
 import '../models/user.dart';
 import '../models/location.dart';
 import '../services/api_service.dart';
 
-// ===== SERVICE PROVIDERS =====
-final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
+// Auth State Class - Define this first
+class AuthState {
+  final bool isAuthenticated;
+  final String? token;
+  final User? user;
+  final String? error;
 
-// ===== FILTER PROVIDERS =====
-final carFiltersProvider = StateNotifierProvider<CarFiltersNotifier, CarFilters>((ref) {
-  return CarFiltersNotifier();
-});
+  AuthState({
+    this.isAuthenticated = false,
+    this.token,
+    this.user,
+    this.error,
+  });
 
-final searchFiltersProvider = StateProvider<Map<String, String?>>((ref) => {});
+  AuthState copyWith({
+    bool? isAuthenticated,
+    String? token,
+    User? user,
+    String? error,
+  }) {
+    return AuthState(
+      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      token: token ?? this.token,
+      user: user ?? this.user,
+      error: error ?? this.error,
+    );
+  }
+}
 
-// ===== CACHE PROVIDERS =====
-final carCacheProvider = StateProvider<Map<String, Car>>((ref) => {});
-final bookingCacheProvider = StateProvider<Map<String, Booking>>((ref) => {});
+// API Service Provider
+final apiServiceProvider = Provider((ref) => ApiService());
 
-// ===== ENHANCED CAR PROVIDERS =====
-final carsProvider = FutureProvider.family<List<Car>, CarFilters>((ref, filters) async {
+// Car Filters Provider
+final carFiltersProvider = StateProvider<CarFilters>((ref) => CarFilters());
+
+// Cars Provider - Fixed syntax
+final carsProvider = FutureProvider<List<Car>>((ref) async {
   final apiService = ref.read(apiServiceProvider);
-  final cache = ref.read(carCacheProvider.notifier);
+  final carFilters = ref.watch(carFiltersProvider);
   
   try {
-    final response = await apiService.getCars(filters: filters);
-    final cars = response.data ?? [];
-    
-    // Cache the cars
-    for (final car in cars) {
-      cache.state[car.id] = car;
-    }
-    
-    return cars;
+    final response = await apiService.getCars(filters: carFilters);
+    return response.data ?? [];
   } catch (e) {
-    print('⚠️ API failed, using cached data: $e');
-    // Return cached cars if available
-    final cachedCars = ref.read(carCacheProvider).values.toList();
-    if (cachedCars.isNotEmpty) {
-      return cachedCars;
-    }
-    
-    // Fallback to mock data
+    print('⚠️ API failed, using mock data: $e');
     return _getMockCars();
   }
 });
 
-// Enhanced car provider with simple filters
-final carsWithSimpleFiltersProvider = FutureProvider.family<List<Car>, Map<String, String?>>((ref, filters) async {
-  final carFilters = CarFilters(
-    location: filters['location'],
-    city: filters['city'],
-    carType: filters['category'],
-    fuelType: filters['fuel_type'],
-    transmission: filters['transmission'],
-  );
+// Filter Notifier Class
+class CarFiltersNotifier extends StateNotifier<CarFilters> {
+  CarFiltersNotifier() : super(CarFilters());
   
-  return ref.watch(carsProvider(carFilters));
-});
-
-// Single car provider with caching
-final carByIdProvider = FutureProvider.family<Car?, String>((ref, carId) async {
-  final apiService = ref.read(apiServiceProvider);
-  final cache = ref.read(carCacheProvider);
-  
-  // Check cache first
-  if (cache.containsKey(carId)) {
-    return cache[carId];
+  void updateLocation(String? location) {
+    state = state.copyWith(location: location);
   }
   
-  try {
-    final response = await apiService.getCarById(carId);
-    final car = response.data;
-    
-    if (car != null) {
-      // Cache the car
-      ref.read(carCacheProvider.notifier).state[carId] = car;
-    }
-    
-    return car;
-  } catch (e) {
-    print('⚠️ Failed to fetch car $carId: $e');
-    return null;
+  void updateCity(String? city) {
+    state = state.copyWith(city: city);
   }
-});
-
-// ===== ENHANCED BOOKING PROVIDERS =====
-final bookingsProvider = FutureProvider<List<Booking>>((ref) async {
-  final apiService = ref.read(apiServiceProvider);
-  final cache = ref.read(bookingCacheProvider.notifier);
   
-  try {
-    final response = await apiService.getBookings();
-    final bookings = response.data ?? [];
-    
-    // Cache the bookings
-    for (final booking in bookings) {
-      cache.state[booking.id] = booking;
-    }
-    
-    return bookings;
-  } catch (e) {
-    print('⚠️ API failed, using cached bookings: $e');
-    // Return cached bookings if available
-    final cachedBookings = ref.read(bookingCacheProvider).values.toList();
-    if (cachedBookings.isNotEmpty) {
-      return cachedBookings;
-    }
-    
-    // Fallback to mock data
-    return _getMockBookings();
+  void updatePriceRange(double? min, double? max) {
+    state = state.copyWith(priceMin: min, priceMax: max);
   }
+  
+  void updateCarType(String? carType) {
+    state = state.copyWith(carType: carType);
+  }
+  
+  void updateFuelType(String? fuelType) {
+    state = state.copyWith(fuelType: fuelType);
+  }
+  
+  void updateTransmission(String? transmission) {
+    state = state.copyWith(transmission: transmission);
+  }
+  
+  void updateSeatingCapacity(int? capacity) {
+    state = state.copyWith(seatingCapacity: capacity);
+  }
+  
+  void updateDateRange(DateTime? from, DateTime? to) {
+    state = state.copyWith(availableFrom: from, availableTo: to);
+  }
+  
+  void updateSorting(String? sortBy, String? sortOrder) {
+    state = state.copyWith(sortBy: sortBy, sortOrder: sortOrder);
+  }
+  
+  void reset() {
+    state = CarFilters();
+  }
+}
+
+// Filter Provider
+final carFiltersNotifierProvider = StateNotifierProvider<CarFiltersNotifier, CarFilters>((ref) {
+  return CarFiltersNotifier();
 });
 
-// Booking by status provider
-final bookingsByStatusProvider = FutureProvider.family<List<Booking>, BookingStatus>((ref, status) async {
-  final allBookings = await ref.watch(bookingsProvider.future);
-  return allBookings.where((booking) => booking.status == status).toList();
-});
-
-// ===== BOOKING ACTIONS PROVIDER =====
-final bookingActionsProvider = StateNotifierProvider<BookingActionsNotifier, AsyncValue<void>>((ref) {
-  return BookingActionsNotifier(ref.read(apiServiceProvider));
-});
-
-// ===== USER PROVIDERS =====
+// User Profile Provider
 final userProfileProvider = FutureProvider<User?>((ref) async {
   final apiService = ref.read(apiServiceProvider);
   
@@ -140,128 +118,12 @@ final userProfileProvider = FutureProvider<User?>((ref) async {
   }
 });
 
-// ===== LOCATION PROVIDERS =====
-final locationsProvider = FutureProvider<List<Location>>((ref) async {
-  final apiService = ref.read(apiServiceProvider);
-  
-  try {
-    final response = await apiService.getLocations();
-    return response.data ?? [];
-  } catch (e) {
-    print('⚠️ Failed to fetch locations: $e');
-    return [];
-  }
-});
-
-// ===== AUTHENTICATION PROVIDERS =====
+// Auth Provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiServiceProvider));
 });
 
-final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).isAuthenticated;
-});
-
-// ===== UI STATE PROVIDERS =====
-final selectedCarProvider = StateProvider<Car?>((ref) => null);
-final selectedBookingProvider = StateProvider<Booking?>((ref) => null);
-final isLoadingProvider = StateProvider<bool>((ref) => false);
-
-// ===== NOTIFIER CLASSES =====
-
-class CarFiltersNotifier extends StateNotifier<CarFilters> {
-  CarFiltersNotifier() : super(CarFilters());
-
-  void updateLocation(String? location) {
-    state = state.copyWith(location: location);
-  }
-
-  void updateCity(String? city) {
-    state = state.copyWith(city: city);
-  }
-
-  void updatePriceRange(double? min, double? max) {
-    state = state.copyWith(priceMin: min, priceMax: max);
-  }
-
-  void updateCarType(String? carType) {
-    state = state.copyWith(carType: carType);
-  }
-
-  void updateFuelType(String? fuelType) {
-    state = state.copyWith(fuelType: fuelType);
-  }
-
-  void updateTransmission(String? transmission) {
-    state = state.copyWith(transmission: transmission);
-  }
-
-  void updateSeatingCapacity(int? capacity) {
-    state = state.copyWith(seatingCapacity: capacity);
-  }
-
-  void updateAvailability(DateTime? from, DateTime? to) {
-    state = state.copyWith(availableFrom: from, availableTo: to);
-  }
-
-  void updateSorting(String? sortBy, String? sortOrder) {
-    state = state.copyWith(sortBy: sortBy, sortOrder: sortOrder);
-  }
-
-  void clearFilters() {
-    state = CarFilters();
-  }
-}
-
-class BookingActionsNotifier extends StateNotifier<AsyncValue<void>> {
-  final ApiService _apiService;
-
-  BookingActionsNotifier(this._apiService) : super(const AsyncValue.data(null));
-
-  Future<void> createBooking({
-    required String carId,
-    required DateTime pickupDate,
-    required DateTime dropoffDate,
-    String? notes,
-  }) async {
-    state = const AsyncValue.loading();
-    
-    try {
-      await _apiService.createBooking(
-        carId: carId,
-        pickupDate: pickupDate,
-        dropoffDate: dropoffDate,
-        notes: notes,
-      );
-      state = const AsyncValue.data(null);
-    } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
-  }
-
-  Future<void> cancelBooking(String bookingId) async {
-    state = const AsyncValue.loading();
-    
-    try {
-      await _apiService.cancelBooking(bookingId);
-      state = const AsyncValue.data(null);
-    } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
-  }
-
-  Future<void> updateBookingStatus(String bookingId, BookingStatus status) async {
-    state = const AsyncValue.loading();
-    
-    try {
-      await _apiService.updateBookingStatus(bookingId, status);
-      state = const AsyncValue.data(null);
-    } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
-  }
-}
-
+// Auth Notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final ApiService _apiService;
 
@@ -286,36 +148,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> register(String name, String email, String password, String phone) async {
-    try {
-      state = state.copyWith(error: null);
-      final response = await _apiService.register(
-        name: name,
-        email: email,
-        password: password,
-        phone: phone,
-      );
-      
-      if (response.success && response.data != null) {
-        final token = response.data!['token'] as String;
-        state = state.copyWith(
-          isAuthenticated: true,
-          token: token,
-        );
-      } else {
-        state = state.copyWith(error: response.message);
-      }
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-    }
-  }
-
   void logout() {
     state = AuthState();
   }
 }
 
-// ===== MOCK DATA HELPERS =====
+// Mock data helper
 List<Car> _getMockCars() {
   return [
     Car(
@@ -357,27 +195,6 @@ List<Car> _getMockCars() {
       description: 'Premium SUV with advanced features and comfortable seating for 7 passengers.',
       createdAt: DateTime.now().subtract(const Duration(days: 30)),
       updatedAt: DateTime.now(),
-    ),
-  ];
-}
-
-List<Booking> _getMockBookings() {
-  return [
-    Booking(
-      id: '1',
-      userId: 'user1',
-      carId: '1',
-      car: null,
-      user: null,
-      pickupDate: DateTime.now().add(const Duration(days: 2)),
-      dropoffDate: DateTime.now().add(const Duration(days: 5)),
-      totalAmount: 3000.0,
-      status: BookingStatus.pending,
-      paymentStatus: PaymentStatus.pending,
-      paymentMethod: null,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      notes: null,
     ),
   ];
 } 

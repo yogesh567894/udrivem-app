@@ -18,6 +18,13 @@ class CarListScreen extends ConsumerStatefulWidget {
 }
 
 class _CarListScreenState extends ConsumerState<CarListScreen> {
+  // Add these missing variables
+  String speed = "180 km/h";
+  String persons = "7 Person";
+  String transmission = "Manual";
+  String fuel = "Petrol";
+  String location = "Puducherry";
+
   String selectedCity = 'Pondicherry';
   String pickupDate = '12/12/2023';
   String dropoffDate = '15/12/2023';

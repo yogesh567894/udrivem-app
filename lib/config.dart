@@ -1,5 +1,4 @@
 class Config {
-  // 🔧 Update these URLs to match your backend
-  static const String baseUrl = 'https://your-backend-url.com';
-  static const String socketUrl = 'https://your-backend-url.com';
+  static const String baseUrl = 'http://localhost:3000';
+  static const String socketUrl = 'http://localhost:3000';
 } 

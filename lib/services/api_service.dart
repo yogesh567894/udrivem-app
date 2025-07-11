@@ -5,6 +5,7 @@ import '../models/booking.dart';
 import '../models/filters.dart';
 import '../models/api_response.dart';
 import '../models/user.dart';
+import '../models/location.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(

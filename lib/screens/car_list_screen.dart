@@ -323,8 +323,7 @@ class _CarListScreenState extends ConsumerState<CarListScreen> {
                 // Car Cards - Dynamic Data
                 Consumer(
                   builder: (context, ref, child) {
-                    final filters = ref.watch(carFiltersProvider);
-                    final carsAsyncValue = ref.watch(carsProvider(filters));
+                    final carsAsyncValue = ref.watch(carsProvider);
                     
                     return carsAsyncValue.when(
                       data: (cars) => _buildCarsList(cars),

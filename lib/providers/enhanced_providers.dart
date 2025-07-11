@@ -4,6 +4,7 @@ import '../models/booking.dart';
 import '../models/filters.dart';
 import '../models/user.dart';
 import '../models/location.dart';
+import '../models/car_specifications.dart';
 import '../services/api_service.dart';
 
 // Auth State Class - Define this first
@@ -44,10 +45,9 @@ final carFiltersProvider = StateProvider<CarFilters>((ref) => CarFilters());
 // Cars Provider - Fixed syntax
 final carsProvider = FutureProvider<List<Car>>((ref) async {
   final apiService = ref.read(apiServiceProvider);
-  final carFilters = ref.watch(carFiltersProvider);
   
   try {
-    final response = await apiService.getCars(filters: carFilters);
+    final response = await apiService.getCars();
     return response.data ?? [];
   } catch (e) {
     print('⚠️ API failed, using mock data: $e');

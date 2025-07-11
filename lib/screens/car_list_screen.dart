@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'car_details_screen.dart';
 import 'profile_screen.dart';
 import 'booking_history_screen.dart';
+// 🆕 Add model imports
+import '../models/car.dart';
+import '../models/booking.dart';
+import '../models/user.dart';
+import '../models/location.dart';
+import '../providers/enhanced_providers.dart';
 
-class CarListScreen extends StatefulWidget {
+class CarListScreen extends ConsumerStatefulWidget {
   const CarListScreen({super.key});
 
   @override
-  State<CarListScreen> createState() => _CarListScreenState();
+  ConsumerState<CarListScreen> createState() => _CarListScreenState();
 }
 
-class _CarListScreenState extends State<CarListScreen> {
+class _CarListScreenState extends ConsumerState<CarListScreen> {
   String selectedCity = 'Pondicherry';
   String pickupDate = '12/12/2023';
   String dropoffDate = '15/12/2023';
@@ -306,47 +313,19 @@ class _CarListScreenState extends State<CarListScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Car Cards
-                _buildCarCard(
-                  imageUrl:
-                      'https://via.placeholder.com/320x144.png?text=XUV+700',
-                  carName: 'XUV 700',
-                  price: '₹1000',
-                  location:
-                      '60, Kamaraj Salai, Near Sayam, Kamaraj Salai, Puducherry, 605001',
-                  mileage: '17kmpl',
-                  persons: '7 Person',
-                  transmission: 'Manual',
-                  fuel: 'Diesel',
-                  speed: '200km/h',
+                // Car Cards - Dynamic Data
+                Consumer(
+                  builder: (context, ref, child) {
+                    final filters = ref.watch(carFiltersProvider);
+                    final carsAsyncValue = ref.watch(carsProvider(filters));
+                    
+                    return carsAsyncValue.when(
+                      data: (cars) => _buildCarsList(cars),
+                      loading: () => _buildLoadingState(),
+                      error: (error, stack) => _buildErrorState(error.toString()),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                _buildCarCard(
-                  imageUrl:
-                      'https://via.placeholder.com/320x144.png?text=Swift',
-                  carName: 'Swift',
-                  price: '₹800',
-                  location: 'MG Road, Puducherry, 605001',
-                  mileage: '21kmpl',
-                  persons: '5 Person',
-                  transmission: 'Automatic',
-                  fuel: 'Petrol',
-                  speed: '180km/h',
-                ),
-                const SizedBox(height: 16),
-                _buildCarCard(
-                  imageUrl:
-                      'https://via.placeholder.com/320x144.png?text=Innova',
-                  carName: 'Innova',
-                  price: '₹1200',
-                  location: 'Beach Road, Puducherry, 605001',
-                  mileage: '15kmpl',
-                  persons: '8 Person',
-                  transmission: 'Manual',
-                  fuel: 'Diesel',
-                  speed: '190km/h',
-                ),
-                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -389,17 +368,49 @@ class _CarListScreenState extends State<CarListScreen> {
     );
   }
 
-  Widget _buildCarCard({
-    required String imageUrl,
-    required String carName,
-    required String price,
-    required String location,
-    required String mileage,
-    required String persons,
-    required String transmission,
-    required String fuel,
-    required String speed,
-  }) {
+  // New methods for dynamic data
+  Widget _buildCarsList(List<Car> cars) {
+    return Column(
+      children: cars.map((car) {
+        return Column(
+          children: [
+            _buildCarCard(car),
+            const SizedBox(height: 16),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'Error: $error',
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCarCard(Car car) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
@@ -430,7 +441,7 @@ class _CarListScreenState extends State<CarListScreen> {
                 top: Radius.circular(16),
               ),
               child: Image.network(
-                imageUrl,
+                car.imageUrl,
                 height: 144,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -458,7 +469,7 @@ class _CarListScreenState extends State<CarListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        carName,
+                        car.name,
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 16,
@@ -469,7 +480,7 @@ class _CarListScreenState extends State<CarListScreen> {
                       Row(
                         children: [
                           Text(
-                            mileage,
+                            car.specifications.mileage,
                             style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
@@ -488,7 +499,7 @@ class _CarListScreenState extends State<CarListScreen> {
                   Row(
                     children: [
                       Text(
-                        price,
+                        car.priceDisplay,
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 20,

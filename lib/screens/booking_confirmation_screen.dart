@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'profile_screen.dart';
 import 'booking_history_screen.dart';
+// 🆕 Add model imports
+import '../models/car.dart';
+import '../models/booking.dart';
+import '../models/user.dart';
+import '../models/location.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   const BookingConfirmationScreen({super.key});

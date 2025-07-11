@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
 import 'booking_history_screen.dart';
+// 🆕 Add these imports
+import '../services/api_service.dart';
+import '../services/socket_service.dart';
+import '../services/location_service.dart';
+import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,6 +18,38 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // 🆕 Add these variables
+  final ApiService _apiService = ApiService();
+  final SocketService _socketService = SocketService();
+  final String _myCarId = 'car_${const Uuid().v4()}';
+  StreamSubscription<Position>? _locationSubscription;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initializeTracking(); // 🆕 Add this line
+  }
+
+  // 🆕 Add this method
+  Future<void> _initializeTracking() async {
+    if (await LocationService.requestPermissions()) {
+      await _apiService.joinCar(_myCarId);
+      _socketService.connect();
+      
+      _locationSubscription = LocationService.getLocationStream().listen((position) {
+        _socketService.sendLocation(_myCarId, position.latitude, position.longitude);
+        _apiService.updateLocation(_myCarId, position.latitude, position.longitude);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel(); // 🆕 Add this line
+    _socketService.dispose(); // 🆕 Add this line
+    super.dispose();
+  }
+
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+// 🆕 Add model imports
+import '../models/car.dart';
+import '../models/booking.dart';
+import '../models/user.dart';
+import '../models/location.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

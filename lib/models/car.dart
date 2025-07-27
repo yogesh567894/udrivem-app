@@ -72,4 +72,9 @@ class Car {
       );
     });
   }
+
+  // Provide fallback URL for failed images
+  String get safeImageUrl {
+    return imageUrl.isNotEmpty ? imageUrl : 'https://via.placeholder.com/300x200?text=Car+Image';
+  }
 } 

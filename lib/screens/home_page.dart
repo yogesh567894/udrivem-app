@@ -34,7 +34,10 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initializeTracking() async {
     if (await LocationService.requestPermissions()) {
       await _apiService.joinCar(_myCarId);
-      _socketService.connect();
+      _socketService.connect(onRemoteUpdate: (carData) {
+        // Handle remote car updates here
+        print('Received car update: \\${carData.id}');
+      });
       
       _locationSubscription = LocationService.getLocationStream().listen((position) {
         _socketService.sendLocation(_myCarId, position.latitude, position.longitude);

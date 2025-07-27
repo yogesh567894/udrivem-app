@@ -1,5 +1,5 @@
 class Config {
-  static const String baseUrl = 'https://api.carsatudrive.com/api';
+  static const String baseUrl = 'https://api.carsatudrive.com';
   static const String socketUrl = 'https://api.carsatudrive.com';
   
   // Additional configuration from your env variables

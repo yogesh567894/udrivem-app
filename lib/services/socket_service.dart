@@ -4,25 +4,27 @@ import '../config.dart';
 
 class SocketService {
   late IO.Socket _socket;
-  Function(CarModel)? onCarLocationUpdate;
+  // Remove onCarLocationUpdate field, use callback in connect
 
-  void connect() {
+  void connect({required Function(CarModel) onRemoteUpdate}) {
     _socket = IO.io(Config.socketUrl, IO.OptionBuilder()
-        .setTransports(['websocket'])
+        .setTransports(['websocket', 'polling'])  // Add polling fallback
         .enableReconnection()
         .setReconnectionAttempts(5)
+        .setReconnectionDelay(2000)
+        .setTimeout(20000)
         .build());
 
     _socket.onConnect((_) {
-      print('🟢 Socket connected');
+      print('✅ Socket connected successfully');
       _socket.emit('UpdateSocket', 'flutter-client');
     });
 
     _socket.on('car_update_location', (data) {
-      if (onCarLocationUpdate != null && data != null) {
+      if (data != null) {
         try {
           final car = CarModel.fromJson(Map<String, dynamic>.from(data));
-          onCarLocationUpdate!(car);
+          onRemoteUpdate(car);
           print('📡 Received car update: ${car.id}');
         } catch (e) {
           print('❌ Socket data error: $e');
@@ -31,6 +33,10 @@ class SocketService {
     });
 
     _socket.onDisconnect((_) => print('🔴 Socket disconnected'));
+    // Add better error handling
+    _socket.onConnectError((error) {
+      print('❌ Socket connection error: $error');
+    });
   }
 
   void sendLocation(String carId, double lat, double lng) {

@@ -12,7 +12,7 @@ class UdriveApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Udrive',
+      title: 'U-Drive',
       debugShowCheckedModeBanner: false,
       home: const HomePage(),
     );

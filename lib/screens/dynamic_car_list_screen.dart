@@ -9,6 +9,27 @@ import 'car_details_screen.dart';
 import 'profile_screen.dart';
 import 'booking_history_screen.dart';
 
+Widget buildCarImage(String imageUrl, {double? height, double? width}) {
+  return Image.network(
+    imageUrl,
+    height: height,
+    width: width,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return Container(
+        height: height,
+        width: width,
+        color: Colors.grey[300],
+        child: const Icon(Icons.car_rental, size: 50),
+      );
+    },
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return const Center(child: CircularProgressIndicator());
+    },
+  );
+}
+
 class DynamicCarListScreen extends ConsumerStatefulWidget {
   const DynamicCarListScreen({super.key});
 
@@ -456,23 +477,7 @@ class _DynamicCarListScreenState extends ConsumerState<DynamicCarListScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child: Image.network(
-                  car.imageUrl,
-                  height: 144,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 144,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(
-                        Icons.directions_car,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
+                child: buildCarImage(car.safeImageUrl, height: 144, width: double.infinity),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),

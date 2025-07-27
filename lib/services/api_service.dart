@@ -6,12 +6,17 @@ import '../models/filters.dart';
 import '../models/api_response.dart';
 import '../models/user.dart';
 import '../models/location.dart';
+// import 'auth_service.dart';
 
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: Config.baseUrl,
     connectTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 3),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
   ));
 
   Future<bool> joinCar(String carId) async {

@@ -16,12 +16,22 @@ class CarDetailsScreen extends StatefulWidget {
 }
 
 class _CarDetailsScreenState extends State<CarDetailsScreen> {
+  // Add this property
+  Car? car;
+
   final TextEditingController pickupController = TextEditingController(
     text: '12/12/2023',
   );
   final TextEditingController dropoffController = TextEditingController(
     text: '12/12/2023',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize car data here if needed
+    // car = widget.car; // if passed from widget
+  }
 
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
@@ -87,6 +97,27 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
     );
   }
 
+  Widget buildCarImage(String imageUrl, {double? height, double? width}) {
+    return Image.network(
+      imageUrl,
+      height: height,
+      width: width,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: height,
+          width: width,
+          color: Colors.grey[300],
+          child: const Icon(Icons.car_rental, size: 50),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,24 +170,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                 // Car Image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    'https://images.mahindrasyouv.com/mahindrasyouv700/images/gallery/exterior/1.jpg',
-                    height: 170,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (context, error, stackTrace) => Container(
-                          height: 170,
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(
-                              Icons.directions_car,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                  ),
+                  child: buildCarImage(car?.safeImageUrl ?? 'https://images.mahindrasyouv.com/mahindrasyouv700/images/gallery/exterior/1.jpg', height: 170, width: double.infinity),
                 ),
                 const SizedBox(height: 20),
                 // Car Name, Mileage, Price, Rating
@@ -214,20 +228,22 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                         ],
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text(
-                          '17kmpl +',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            '17kmpl +',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ],
                 ),

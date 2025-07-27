@@ -16,6 +16,9 @@ class BookingConfirmationScreen extends StatefulWidget {
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
+  // Add this property
+  Car? car;
+
   String selectedPayment = 'Payment Option';
 
   final List<String> paymentOptions = [
@@ -26,6 +29,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     'Net Banking',
     'Wallet',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize car data if available from widget or API
+    // car = widget.car; // if passed from previous screen
+  }
 
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
@@ -143,24 +153,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 // Car Image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    'https://images.mahindrasyouv.com/mahindrasyouv700/images/gallery/exterior/1.jpg',
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (context, error, stackTrace) => Container(
-                          height: 120,
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(
-                              Icons.directions_car,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                  ),
+                  child: buildCarImage(car?.safeImageUrl ?? 'https://images.mahindrasyouv.com/mahindrasyouv700/images/gallery/exterior/1.jpg', height: 120, width: double.infinity),
                 ),
                 const SizedBox(height: 20),
                 // Car Name, Mileage, Price, Rating
@@ -529,4 +522,25 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       ],
     );
   }
+}
+
+Widget buildCarImage(String imageUrl, {double? height, double? width}) {
+  return Image.network(
+    imageUrl,
+    height: height,
+    width: width,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return Container(
+        height: height,
+        width: width,
+        color: Colors.grey[300],
+        child: const Icon(Icons.car_rental, size: 50),
+      );
+    },
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return const Center(child: CircularProgressIndicator());
+    },
+  );
 }
